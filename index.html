@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revision Command Centre — Exam Season 2026</title>
+<style>
+:root {
+  --crypto: #6C5CE7;
+  --crypto-light: #a29bfe;
+  --infra: #E17055;
+  --infra-light: #fab1a0;
+  --forensics: #00B894;
+  --forensics-light: #55efc4;
+  --pm: #0984E3;
+  --pm-light: #74b9ff;
+  --embedded: #FDCB6E;
+  --embedded-light: #ffeaa7;
+  --security: #e84393;
+  --security-light: #fd79a8;
+  --buffer: #636e72;
+  --buffer-light: #b2bec3;
+  --work: #2d3436;
+  --exam: #ff1493;
+  --exam-light: #ff7ac8;
+  --bg: #0f0f23;
+  --card: #1a1a2e;
+  --card-hover: #22223a;
+  --text: #e0e0e0;
+  --text-dim: #888;
+  --border: #333;
+  --success: #00b894;
+  --warning: #fdcb6e;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+.top-bar{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);padding:18px 28px;border-bottom:2px solid var(--crypto);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.top-bar h1{font-size:1.4rem;font-weight:700;}
+.top-bar h1 span{color:var(--crypto);}
+.top-bar-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.countdown{background:var(--crypto);color:#fff;padding:7px 16px;border-radius:20px;font-weight:700;font-size:0.88rem;}
+.next-exam{background:var(--exam);color:#fff;padding:7px 16px;border-radius:20px;font-weight:700;font-size:0.88rem;}
+
+.tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);overflow-x:auto;}
+.tab{padding:13px 22px;cursor:pointer;font-weight:600;font-size:0.88rem;border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s;color:var(--text-dim);}
+.tab:hover{color:var(--text);background:rgba(255,255,255,.03);}
+.tab.active{color:var(--crypto);border-bottom-color:var(--crypto);}
+.tab-content{display:none;padding:18px;max-width:1500px;margin:0 auto;}
+.tab-content.active{display:block;}
+
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;padding:14px;background:var(--card);border-radius:12px;border:1px solid var(--border);}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:500;}
+.legend-dot{width:13px;height:13px;border-radius:4px;flex-shrink:0;}
+
+.cal-header{display:grid;grid-template-columns:80px repeat(7,1fr);gap:2px;margin-bottom:2px;}
+.cal-header div{text-align:center;font-weight:700;font-size:.75rem;padding:9px 4px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;}
+
+.week-row{display:grid;grid-template-columns:80px repeat(7,1fr);gap:2px;margin-bottom:2px;}
+.week-label{background:var(--card);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem;color:var(--crypto);border-radius:8px 0 0 8px;writing-mode:vertical-lr;text-orientation:mixed;letter-spacing:1px;padding:4px;}
+
+.day-cell{background:var(--card);border-radius:8px;padding:7px;min-height:120px;border:1px solid var(--border);transition:all .2s;position:relative;}
+.day-cell:hover{border-color:var(--crypto);}
+.day-cell.today{border-color:var(--crypto);box-shadow:0 0 12px rgba(108,92,231,.35);}
+.day-cell.past{opacity:.45;}
+.day-cell.work-day{background:rgba(45,52,54,.5);}
+.day-cell.buffer-day{background:rgba(99,110,114,.12);}
+.day-cell.exam-day{background:rgba(255,20,147,.14);border-color:var(--exam);box-shadow:0 0 12px rgba(255,20,147,.35);}
+.day-cell.pre-exam{background:rgba(255,243,176,.18);border-color:rgba(253,203,110,.6);}
+.day-cell.outside{opacity:.15;pointer-events:none;}
+
+.day-date{font-size:.73rem;font-weight:700;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;}
+.badge{font-size:.58rem;padding:2px 6px;border-radius:8px;font-weight:700;}
+.badge-work{background:var(--work);color:#dfe6e9;}
+.badge-buffer{background:var(--buffer);color:#fff;}
+.badge-exam{background:var(--exam);color:#fff;animation:pulse-exam 2s infinite;}
+.badge-pre{background:rgba(253,203,110,.45);color:#ffeaa7;}
+@keyframes pulse-exam{0%,100%{opacity:1;}50%{opacity:.7;}}
+
+.drop-zone{min-height:55px;border-radius:6px;transition:all .2s;}
+.drop-zone.drag-over{background:rgba(108,92,231,.15);border:2px dashed var(--crypto);}
+
+.task-card{padding:4px 7px;margin-bottom:3px;border-radius:5px;font-size:.7rem;cursor:grab;user-select:none;transition:all .15s;font-weight:500;border-left:3px solid transparent;display:flex;align-items:center;gap:4px;}
+.task-card:active{cursor:grabbing;transform:scale(1.03);}
+.task-card .check{width:13px;height:13px;border-radius:3px;border:2px solid rgba(255,255,255,.25);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;}
+.task-card.done{opacity:.35;text-decoration:line-through;}
+.task-card.done .check{background:var(--success);border-color:var(--success);}
+
+.task-card[data-module="crypto"]{background:rgba(108,92,231,.2);border-left-color:var(--crypto);color:var(--crypto-light);}
+.task-card[data-module="infra"]{background:rgba(225,112,85,.2);border-left-color:var(--infra);color:var(--infra-light);}
+.task-card[data-module="forensics"]{background:rgba(0,184,148,.2);border-left-color:var(--forensics);color:var(--forensics-light);}
+.task-card[data-module="pm"]{background:rgba(9,132,227,.2);border-left-color:var(--pm);color:var(--pm-light);}
+.task-card[data-module="embedded"]{background:rgba(253,203,110,.2);border-left-color:var(--embedded);color:var(--embedded-light);}
+.task-card[data-module="security"]{background:rgba(232,67,147,.2);border-left-color:var(--security);color:var(--security-light);}
+.task-card[data-module="buffer"]{background:rgba(99,110,114,.2);border-left-color:var(--buffer);color:var(--buffer-light);}
+.task-card[data-module="exam"]{background:rgba(255,20,147,.28);border-left-color:var(--exam);color:var(--exam-light);font-weight:700;}
+
+.sr-badge{font-size:.52rem;padding:1px 4px;border-radius:4px;font-weight:700;background:rgba(255,255,255,.1);margin-left:auto;flex-shrink:0;}
+
+/* Exam Countdown Cards */
+.exam-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:20px;}
+.exam-card{background:var(--card);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;align-items:center;gap:14px;}
+.exam-card .ec-color{width:6px;height:50px;border-radius:3px;flex-shrink:0;}
+.exam-card .ec-info h3{font-size:.85rem;margin-bottom:2px;}
+.exam-card .ec-info p{font-size:.75rem;color:var(--text-dim);}
+.exam-card .ec-days{margin-left:auto;font-size:1.5rem;font-weight:800;flex-shrink:0;}
+
+/* POMODORO */
+.pomo-panel{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:36px;text-align:center;max-width:480px;margin:0 auto;}
+.pomo-time{font-size:4.5rem;font-weight:800;font-variant-numeric:tabular-nums;margin:18px 0;color:var(--crypto);}
+.pomo-label{font-size:1rem;color:var(--text-dim);margin-bottom:18px;font-weight:600;}
+.pomo-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.pomo-btn{padding:11px 26px;border-radius:10px;border:none;font-weight:700;font-size:.95rem;cursor:pointer;transition:all .2s;}
+.pomo-btn.primary{background:var(--crypto);color:#fff;}
+.pomo-btn.primary:hover{background:#5a4bd1;}
+.pomo-btn.secondary{background:var(--border);color:var(--text);}
+.pomo-btn.secondary:hover{background:#444;}
+.pomo-sessions{display:flex;gap:7px;justify-content:center;margin-top:22px;}
+.pomo-dot{width:15px;height:15px;border-radius:50%;border:2px solid var(--border);}
+.pomo-dot.filled{background:var(--crypto);border-color:var(--crypto);}
+.pomo-dot.current{border-color:var(--crypto);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(108,92,231,.4);}50%{box-shadow:0 0 0 8px rgba(108,92,231,0);}}
+
+/* BLUEPRINT */
+.blueprint{display:grid;gap:11px;max-width:700px;margin:0 auto;}
+.bp-block{background:var(--card);border-radius:12px;padding:14px 18px;border-left:4px solid var(--border);display:flex;gap:14px;align-items:flex-start;}
+.bp-time{font-weight:700;font-size:.88rem;color:var(--crypto);min-width:70px;flex-shrink:0;}
+.bp-content h3{font-size:.9rem;margin-bottom:3px;}
+.bp-content p{font-size:.78rem;color:var(--text-dim);line-height:1.5;}
+.bp-block.focus{border-left-color:var(--crypto);}
+.bp-block.break{border-left-color:var(--success);}
+.bp-block.life{border-left-color:var(--warning);}
+.bp-block.rest{border-left-color:#dfe6e9;}
+
+/* PROGRESS */
+.progress-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;}
+.progress-card{background:var(--card);border-radius:12px;padding:18px;border:1px solid var(--border);}
+.progress-card h3{font-size:.85rem;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.progress-card .dot{width:10px;height:10px;border-radius:3px;}
+.progress-bar-bg{height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin-bottom:5px;}
+.progress-bar-fill{height:100%;border-radius:4px;transition:width .5s ease;}
+.progress-pct{font-size:.78rem;color:var(--text-dim);text-align:right;}
+
+/* TOPICS */
+.topic-list{max-width:800px;margin:0 auto;}
+.topic-module{margin-bottom:20px;}
+.topic-module-header{display:flex;align-items:center;gap:10px;padding:11px 15px;background:var(--card);border-radius:10px;cursor:pointer;margin-bottom:3px;border:1px solid var(--border);}
+.topic-module-header:hover{border-color:var(--crypto);}
+.topic-module-header h3{font-size:.88rem;flex:1;}
+.topic-module-header .arrow{transition:transform .2s;}
+.topic-module-header.open .arrow{transform:rotate(90deg);}
+.topic-items{padding:3px 0 3px 18px;display:none;}
+.topic-items.open{display:block;}
+.topic-item{display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:7px;margin-bottom:2px;font-size:.8rem;cursor:pointer;}
+.topic-item:hover{background:rgba(255,255,255,.03);}
+.topic-item .tcheck{width:17px;height:17px;border-radius:4px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;transition:all .2s;}
+.topic-item.checked .tcheck{background:var(--success);border-color:var(--success);}
+.topic-item.checked span{text-decoration:line-through;opacity:.5;}
+.topic-confidence{margin-left:auto;display:flex;gap:2px;}
+.topic-confidence .star{width:15px;height:15px;cursor:pointer;opacity:.2;font-size:13px;}
+.topic-confidence .star.filled{opacity:1;}
+
+/* CONFIG */
+.config-section{max-width:600px;margin:0 auto;}
+.config-group{background:var(--card);border-radius:12px;padding:18px;margin-bottom:14px;border:1px solid var(--border);}
+.config-group h3{font-size:.9rem;margin-bottom:12px;color:var(--crypto);}
+.config-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.config-row label{font-size:.82rem;min-width:110px;}
+.config-row select,.config-row input{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:.82rem;flex:1;}
+
+h2.section-title{font-size:1.15rem;margin-bottom:14px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+.info-box{background:rgba(108,92,231,.1);border:1px solid rgba(108,92,231,.3);border-radius:10px;padding:14px;margin-bottom:18px;font-size:.82rem;line-height:1.6;}
+.info-box strong{color:var(--crypto);}
+.info-box.exam-info{background:rgba(255,20,147,.1);border-color:rgba(255,20,147,.35);}
+.info-box.exam-info strong{color:var(--exam-light);}
+
+.staircase{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:20px;}
+.stair{background:var(--card);border-radius:10px;padding:14px;border:1px solid var(--border);text-align:center;}
+.stair h4{font-size:.8rem;color:var(--text-dim);margin-bottom:4px;}
+.stair .stair-mod{font-size:.95rem;font-weight:700;margin-bottom:2px;}
+.stair .stair-date{font-size:.75rem;color:var(--text-dim);}
+
+@media(max-width:900px){
+  .cal-header,.week-row{grid-template-columns:45px repeat(7,1fr);}
+  .week-label{font-size:.6rem;}
+  .day-cell{min-height:95px;padding:4px;}
+  .task-card{font-size:.62rem;padding:3px 4px;}
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>Revision <span>Command Centre</span></h1>
+  <div class="top-bar-right">
+    <div class="next-exam" id="next-exam">Loading...</div>
+    <div class="countdown" id="countdown">Loading...</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="calendar">Calendar</div>
+  <div class="tab" data-tab="strategy">Strategy</div>
+  <div class="tab" data-tab="blueprint">Daily Blueprint</div>
+  <div class="tab" data-tab="pomodoro">Pomodoro</div>
+  <div class="tab" data-tab="topics">Topics</div>
+  <div class="tab" data-tab="progress">Progress</div>
+  <div class="tab" data-tab="config">Settings</div>
+</div>
+
+<!-- ==================== CALENDAR ==================== -->
+<div class="tab-content active" id="tab-calendar">
+  <div class="info-box">
+    <strong>Drag & drop</strong> any task to rearrange. Click the checkbox to mark done. Tags:
+    <strong>NEW</strong> = first learn, <strong>SR-2</strong> = 2-day review, <strong>SR-5</strong> = 5-day review,
+    <strong>SR-7</strong> = 7-day review, <strong>PP</strong> = past paper, <strong>CRAM</strong> = pre-exam intensive.
+  </div>
+  <div class="exam-cards" id="exam-cards"></div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--infra)"></div>IY3612 Infrastructure</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--crypto)"></div>IY3660 Cryptography</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--embedded)"></div>IY5606 Embedded</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--forensics)"></div>IY3609 Forensics</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--pm)"></div>CS3003 Project Mgmt</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--security)"></div>IY3501 Security Mgmt</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--exam)"></div>EXAM DAY</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--buffer)"></div>Buffer / Rest</div>
+  </div>
+  <div class="cal-header"><div></div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div><div>SUN</div></div>
+  <div id="calendar-grid"></div>
+</div>
+
+<!-- ==================== STRATEGY ==================== -->
+<div class="tab-content" id="tab-strategy">
+  <h2 class="section-title">The Staircase Strategy</h2>
+  <div class="info-box exam-info">
+    Your exams are spread over <strong>18 days</strong> with gaps between each one. The strategy:
+    build deep knowledge of all modules during pre-season (now until May 7), then use the <strong>gap days between exams</strong>
+    for laser-focused cramming on the next paper. IY3612 and IY3660 are front-loaded because they're first AND hardest.
+  </div>
+
+  <div class="staircase">
+    <div class="stair" style="border-top:3px solid var(--exam)"><h4>EXAM 1</h4><div class="stair-mod" style="color:var(--exam)">IY3612</div><div class="stair-date">Fri 8 May, 2pm</div></div>
+    <div class="stair" style="border-top:3px solid var(--exam)"><h4>EXAM 2</h4><div class="stair-mod" style="color:var(--exam)">IY3660</div><div class="stair-date">Wed 13 May, 9:30am</div></div>
+    <div class="stair" style="border-top:3px solid var(--exam)"><h4>EXAM 3</h4><div class="stair-mod" style="color:var(--exam)">IY5606</div><div class="stair-date">Mon 18 May, 2pm</div></div>
+    <div class="stair" style="border-top:3px solid var(--exam)"><h4>EXAM 4</h4><div class="stair-mod" style="color:var(--exam)">IY3609</div><div class="stair-date">Fri 22 May, 9:30am</div></div>
+    <div class="stair" style="border-top:3px solid var(--exam)"><h4>EXAM 5</h4><div class="stair-mod" style="color:var(--exam)">CS3003</div><div class="stair-date">Tue 26 May, 9:30am</div></div>
+    <div class="stair" style="border-top:3px solid var(--exam)"><h4>EXAM 6</h4><div class="stair-mod" style="color:var(--exam)">IY3501</div><div class="stair-date">Thu 28 May, 9:30am</div></div>
+  </div>
+
+  <h2 class="section-title">Phase Breakdown</h2>
+  <div class="blueprint">
+    <div class="bp-block" style="border-left-color:var(--crypto)">
+      <div class="bp-time">PHASE 1</div>
+      <div class="bp-content"><h3>Foundation Building (Mar 24 - Apr 20) — 4 weeks</h3>
+        <p>Learn all topics across all 6 modules. <strong>~30% of time on IY3660</strong> (starting from scratch), <strong>~25% on IY3612</strong> (hardest module, first exam), and remaining 45% split across IY3609, CS3003, IY5606, IY3501. IY3501 needs lighter touch since you've mostly completed it. Use Active Recall + Spaced Repetition from day one.</p>
+      </div>
+    </div>
+    <div class="bp-block" style="border-left-color:var(--exam)">
+      <div class="bp-time">PHASE 2</div>
+      <div class="bp-content"><h3>Past Paper Intensive (Apr 21 - May 4) — 2 weeks</h3>
+        <p>Timed past papers for all modules under exam conditions. Mark your own work. Identify weak spots and drill them. Still weighted toward IY3612 + IY3660 but touching all modules.</p>
+      </div>
+    </div>
+    <div class="bp-block" style="border-left-color:var(--infra)">
+      <div class="bp-time">PHASE 3</div>
+      <div class="bp-content"><h3>Pre-Exam Sprints (May 5 - May 28)</h3>
+        <p>Each gap between exams is dedicated to the NEXT exam. 2-4 days of focused revision using flashcard blitz + final past paper + weak-area targeted review. After each exam, immediately switch focus.</p>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title" style="margin-top:24px">Sprint Schedule</h2>
+  <div class="blueprint">
+    <div class="bp-block" style="border-left-color:var(--infra)"><div class="bp-time">May 5-7</div><div class="bp-content"><h3>IY3612 Final Sprint (3 days)</h3><p>Flashcard blitz on graph theory, MITRE ATT&CK, control systems. Final past paper. Practice writing "brief, reasoned answers". Exam is May 8 at 2pm.</p></div></div>
+    <div class="bp-block" style="border-left-color:var(--crypto)"><div class="bp-time">May 9-12</div><div class="bp-content"><h3>IY3660 Final Sprint (4 days)</h3><p>Drill the 4-bit block cipher table until automatic. Revise all security games. Write out TLS/Ruritania essay plan. Final 2 past papers timed. Exam is May 13 at 9:30am.</p></div></div>
+    <div class="bp-block" style="border-left-color:var(--embedded)"><div class="bp-time">May 14-17</div><div class="bp-content"><h3>IY5606 Final Sprint (4 days)</h3><p>Smart cards, EMV, SIM/USIM, TEEs, IoT. This is a definition-heavy exam — flashcards are king. Prepare the 25-mark scenario essay plan. Exam is May 18 at 2pm.</p></div></div>
+    <div class="bp-block" style="border-left-color:var(--forensics)"><div class="bp-time">May 19-21</div><div class="bp-content"><h3>IY3609 Final Sprint (3 days)</h3><p>FAT32 cluster calculations, RAID configs, memory forensics, Daubert criteria, mobile forensics. Past paper under timed conditions. Exam is May 22 at 9:30am.</p></div></div>
+    <div class="bp-block" style="border-left-color:var(--pm)"><div class="bp-time">May 23-25</div><div class="bp-content"><h3>CS3003 Final Sprint (3 days)</h3><p>EVM formulas (SV, CV, SPI, CPI) drilled. Critical path method practiced. Review PM concepts. This is your easiest exam — you've got this. Exam is May 26 at 9:30am.</p></div></div>
+    <div class="bp-block" style="border-left-color:var(--security)"><div class="bp-time">May 27</div><div class="bp-content"><h3>IY3501 Final Sprint (1 day)</h3><p>You've mostly completed this module already. Quick flashcard blitz on ISO 27001/27002, risk assessment methods (STRIDE, PASTA, DREAD), GDPR, incident management, and audit. Skim past paper. Exam is May 28 at 9:30am.</p></div></div>
+  </div>
+
+  <h2 class="section-title" style="margin-top:24px">Active Recall Techniques</h2>
+  <div class="blueprint">
+    <div class="bp-block focus"><div class="bp-time">Blurting</div><div class="bp-content"><h3>The Blurting Method</h3><p>Read a topic for 10 min. Close everything. Write EVERYTHING you remember on a blank page. Open notes — use a different colour to fill gaps. The gaps are what to focus on next.</p></div></div>
+    <div class="bp-block focus"><div class="bp-time">Flashcards</div><div class="bp-content"><h3>Active Recall Cards</h3><p>Use Anki or physical cards. Front: question. Back: answer. Rate confidence 1-5. Wrong cards return sooner. For IY3660: every security definition + every block cipher step.</p></div></div>
+    <div class="bp-block focus"><div class="bp-time">Teach It</div><div class="bp-content"><h3>Feynman Technique</h3><p>Explain a concept out loud as if teaching a friend. If you stumble, you've found a gap. Essential for IY3612 — practise saying "brief, reasoned answers" aloud.</p></div></div>
+    <div class="bp-block focus"><div class="bp-time">Past Papers</div><div class="bp-content"><h3>Exam Simulation</h3><p>In Phases 2-3, do papers under timed conditions (2hrs). Mark yourself. This is the single best predictor of exam performance.</p></div></div>
+  </div>
+</div>
+
+<!-- ==================== BLUEPRINT ==================== -->
+<div class="tab-content" id="tab-blueprint">
+  <h2 class="section-title">Your Ideal Study Day (ADHD-Optimised)</h2>
+  <div class="info-box">
+    Each block = 3 Pomodoros (25+5, 25+5, 25+5 = <strong>90 min</strong>). Max <strong>3 blocks/day</strong> (4.5 hrs focused study).
+    Hardest module always goes in <strong>Block 1</strong> when your brain is freshest.
+  </div>
+  <div class="blueprint">
+    <div class="bp-block life"><div class="bp-time">08:00</div><div class="bp-content"><h3>Morning Routine</h3><p>Wake, shower, breakfast, coffee. No screens for 15 min — protects dopamine for study ahead.</p></div></div>
+    <div class="bp-block focus"><div class="bp-time">09:00</div><div class="bp-content"><h3>BLOCK 1 — Hardest Module (IY3612 or IY3660)</h3><p>3 Pomodoros. Use Active Recall: close notes, write everything you remember, then check. Never just re-read.</p></div></div>
+    <div class="bp-block break"><div class="bp-time">10:30</div><div class="bp-content"><h3>Big Break (20 min)</h3><p>Walk, snack, stretch. Leave your desk completely. Movement resets ADHD focus.</p></div></div>
+    <div class="bp-block focus"><div class="bp-time">11:00</div><div class="bp-content"><h3>BLOCK 2 — Second Module (IY3609 / IY5606 / CS3003)</h3><p>3 Pomodoros. Try Blurting: read topic 10 min, then write everything on blank page.</p></div></div>
+    <div class="bp-block life"><div class="bp-time">12:30</div><div class="bp-content"><h3>Lunch + Life Admin (75 min)</h3><p>Cook a proper meal. Do one chore: laundry, dishes, tidy. You live alone — staying on top of this prevents stress spirals.</p></div></div>
+    <div class="bp-block focus"><div class="bp-time">14:00</div><div class="bp-content"><h3>BLOCK 3 — Spaced Repetition / Past Papers</h3><p>3 Pomodoros. Review flashcards from 2, 5, 7 days ago. Or do a timed past paper section.</p></div></div>
+    <div class="bp-block break"><div class="bp-time">15:30</div><div class="bp-content"><h3>STUDY DONE</h3><p>Brain needs rest to consolidate. No guilt. You earned this.</p></div></div>
+    <div class="bp-block rest"><div class="bp-time">15:30+</div><div class="bp-content"><h3>Free Time</h3><p>Exercise, gaming, socialising, groceries, cooking, Netflix. One evening/week: batch-cook meals.</p></div></div>
+    <div class="bp-block life"><div class="bp-time">22:00</div><div class="bp-content"><h3>Wind Down (Optional)</h3><p>10 min light flashcard skim. Reviewing before sleep boosts retention. But sleep > studying.</p></div></div>
+  </div>
+  <h2 class="section-title" style="margin-top:24px">Work Days (2/week)</h2>
+  <div class="blueprint">
+    <div class="bp-block life"><div class="bp-time">Daytime</div><div class="bp-content"><h3>Work</h3><p>Focus on your job. Don't split focus with study — it helps neither.</p></div></div>
+    <div class="bp-block focus"><div class="bp-time">Evening</div><div class="bp-content"><h3>Optional: 1 Pomodoro (25 min)</h3><p>Light flashcard review only. If tired, skip it — the buffer day catches you up.</p></div></div>
+  </div>
+</div>
+
+<!-- ==================== POMODORO ==================== -->
+<div class="tab-content" id="tab-pomodoro">
+  <h2 class="section-title">Pomodoro Timer</h2>
+  <div class="info-box"><strong>25 min focus</strong> then <strong>5 min break</strong>. After 3 Pomodoros = <strong>20 min long break</strong>. That's one study block. Max 3 blocks (9 Pomodoros) per day.</div>
+  <div class="pomo-panel">
+    <div class="pomo-label" id="pomo-label">FOCUS TIME</div>
+    <div class="pomo-time" id="pomo-time">25:00</div>
+    <div class="pomo-btns">
+      <button class="pomo-btn primary" id="pomo-start">Start</button>
+      <button class="pomo-btn secondary" id="pomo-pause">Pause</button>
+      <button class="pomo-btn secondary" id="pomo-reset">Reset</button>
+    </div>
+    <div class="pomo-sessions" id="pomo-dots"></div>
+    <p style="margin-top:14px;font-size:.78rem;color:var(--text-dim);" id="pomo-status">Block 1 of 3 — Pomodoro 1 of 3</p>
+  </div>
+</div>
+
+<!-- ==================== TOPICS ==================== -->
+<div class="tab-content" id="tab-topics">
+  <h2 class="section-title">Topic Mastery Checklist</h2>
+  <div class="info-box">Click topics to mark learned. Stars = confidence (1-5). Low/no stars = focus here first. <strong>IY3501 removed</strong> (no exam). Saves automatically.</div>
+  <div class="topic-list" id="topic-list"></div>
+</div>
+
+<!-- ==================== PROGRESS ==================== -->
+<div class="tab-content" id="tab-progress">
+  <h2 class="section-title">Module Progress</h2>
+  <div class="progress-grid" id="progress-grid"></div>
+</div>
+
+<!-- ==================== CONFIG ==================== -->
+<div class="tab-content" id="tab-config">
+  <h2 class="section-title">Settings</h2>
+  <div class="config-section">
+    <div class="config-group">
+      <h3>Work Days</h3>
+      <p style="font-size:.78rem;color:var(--text-dim);margin-bottom:10px;">Select your 2 work days. Calendar rebuilds automatically.</p>
+      <div class="config-row"><label>Day 1:</label><select id="work1"><option value="1">Monday</option><option value="2">Tuesday</option><option value="3" selected>Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option></select></div>
+      <div class="config-row"><label>Day 2:</label><select id="work2"><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6" selected>Saturday</option></select></div>
+      <button class="pomo-btn primary" style="margin-top:10px;" onclick="applySettings()">Rebuild Calendar</button>
+    </div>
+    <div class="config-group">
+      <h3>Pomodoro Length</h3>
+      <div class="config-row"><label>Focus (min):</label><input type="number" id="cfg-focus" value="25" min="15" max="50"></div>
+      <div class="config-row"><label>Short break:</label><input type="number" id="cfg-break" value="5" min="3" max="15"></div>
+      <div class="config-row"><label>Long break:</label><input type="number" id="cfg-long" value="20" min="10" max="30"></div>
+    </div>
+    <div class="config-group">
+      <h3>Data</h3>
+      <button class="pomo-btn secondary" onclick="exportData()">Export Progress</button>
+      <button class="pomo-btn secondary" style="margin-left:8px;" onclick="if(confirm('Reset ALL progress and checked tasks?')){localStorage.clear();location.reload();}">Reset All</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const EXAMS = [
+  { key:'infra',    code:'IY3612', name:'Critical Infrastructure Security', date:new Date(2026,4,8,14,0),  color:'#ff1493' },
+  { key:'crypto',   code:'IY3660', name:'Applications of Cryptography',     date:new Date(2026,4,13,9,30), color:'#ff1493' },
+  { key:'embedded', code:'IY5606', name:'Embedded Technologies',            date:new Date(2026,4,18,14,0), color:'#ff1493' },
+  { key:'forensics',code:'IY3609', name:'Digital Forensics',                date:new Date(2026,4,22,9,30), color:'#ff1493' },
+  { key:'pm',       code:'CS3003', name:'IT Project Management',            date:new Date(2026,4,26,9,30), color:'#ff1493' },
+  { key:'security', code:'IY3501', name:'Security Management',              date:new Date(2026,4,28,9,30), color:'#ff1493' },
+];
+const EXAM_DATES = {'2026-05-08':'infra','2026-05-13':'crypto','2026-05-18':'embedded','2026-05-22':'forensics','2026-05-26':'pm','2026-05-28':'security'};
+const PRE_EXAM = {
+  'infra':['2026-05-05','2026-05-06','2026-05-07'],
+  'crypto':['2026-05-09','2026-05-10','2026-05-11','2026-05-12'],
+  'embedded':['2026-05-14','2026-05-15','2026-05-16','2026-05-17'],
+  'forensics':['2026-05-19','2026-05-20','2026-05-21'],
+  'pm':['2026-05-23','2026-05-24','2026-05-25'],
+  'security':['2026-05-27'],
+};
+
+const MODULES = {
+  infra:    {code:'IY3612',name:'Critical Infrastructure Security',color:'#E17055'},
+  crypto:   {code:'IY3660',name:'Applications of Cryptography',color:'#6C5CE7'},
+  embedded: {code:'IY5606',name:'Embedded Technologies',color:'#FDCB6E'},
+  forensics:{code:'IY3609',name:'Digital Forensics',color:'#00B894'},
+  pm:       {code:'CS3003',name:'IT Project Management',color:'#0984E3'},
+  security: {code:'IY3501',name:'Security Management',color:'#e84393'},
+};
+
+const TOPICS = {
+  crypto:['Historical Ciphers, OTP & Stream Ciphers','Block Cipher Design (AES, PRP Security)','Block Cipher Modes: ECB/CBC/CTR Calculations','Security Models (IND-CPA, IND-CCA)','Hash Functions (Merkle-Damgard, Birthday)','MACs (UF-CMA, HMAC, CBC-MAC)','Authenticated Encryption (AE, EtM/MtE, GCM)','RSA Encryption & Number Theory','Diffie-Hellman, ElGamal & ECC','Digital Signatures (RSA sigs, Schnorr)','Key Management & Lifecycle','TLS Protocol (Handshake, Record, Forward Secrecy)'],
+  infra:['Critical Infrastructure Concepts & Strategies','Complex Attacks, Kill Chains, APT Cases','Graph Theory: Robustness & Centrality','Internet: BGP, RPKI, BGPsec, DDoS','Economic Models & Interdependency (I-O)','CPS & Control Theory (Feedback Loops)','ICS Architecture: SCADA, DCS, Protocols','Attacks on CPS (Stuxnet, Sensors, Actuators)','State Estimation & Intrusion Detection','Adversary Modelling (ATT&CK, Attack Trees, Game Theory)','Cyber Conflict & Policy (Hybrid Warfare)'],
+  forensics:['Intro & Evidence Types','Legislation: ACPO, Daubert, RIPA, OPOs','Data Storage (HDD, SSD, MBR/GPT)','FAT32: Structure & Cluster Chains','NTFS & Metadata Analysis','Host Forensics I: Signatures, Carving','Host Forensics II: Registry, Logs, Encryption','DFIR, Live & Memory Forensics','Network Forensics & Traffic Analysis','Malware Analysis (Static & Dynamic)','Mobile Forensics (iOS, Android, SIM)'],
+  pm:['PM Fundamentals (Lifecycle, Triangle)','Pre-Initiation (Business Case, TCO)','Initiation (Stakeholders, Charter)','Scope & Time (WBS, Network Diagrams, CPM)','Resources & Communications','Risk Management (Register, Responses)','Configuration & Change Management','EVM Calculations (SV, CV, SPI, CPI)','Team Management (Tuckman, Conflict, Quality)'],
+  embedded:['Smart Cards & RFID/NFC, Trusted Production','Smart Card OS & Interoperability','EMV Payment Systems (SDA, DDA, Tokenization)','SIM/USIM, GSM/3G Authentication','Security Attacks (Side-Channel, Glitch)','Java Card Programming','Automotive Security','IoT Security & Secure Boot','TEEs (SGX, TrustZone, Attestation)','AI on Edge & Chip Migration'],
+  security:['What is Information Security? (CIA Triad, Threats, Attackers)','Standards (ISO 27000/27001/27002, PCI-DSS, Cyber Essentials)','Risk Assessment (STRIDE, PASTA, DREAD, Risk Treatment)','Security Controls (ISO 27002, Org/People/Physical/Tech)','Incident Management & Disaster Recovery (BCP, DR)','Case Studies (TalkTalk, British Airways Breaches)','Legal & Ethical Aspects (GDPR, Privacy, Diversity)','Staff Management (Employee Lifecycle, ISO 27002)','Audit (ISO 27001, Risk Strategy, Compliance)'],
+};
+
+let workDays = JSON.parse(localStorage.getItem('workDays')||'[3,6]');
+let taskStates = JSON.parse(localStorage.getItem('taskStates2')||'{}');
+let topicStates = JSON.parse(localStorage.getItem('topicStates2')||'{}');
+function save(){localStorage.setItem('taskStates2',JSON.stringify(taskStates));localStorage.setItem('topicStates2',JSON.stringify(topicStates));localStorage.setItem('workDays',JSON.stringify(workDays));}
+document.getElementById('work1').value=workDays[0];
+document.getElementById('work2').value=workDays[1];
+
+function daysBetween(a,b){return Math.ceil((b-a)/864e5);}
+function fmtDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+function updateCountdown(){
+  const now=new Date();
+  const first=EXAMS[0].date;
+  const d=daysBetween(now,first);
+  document.getElementById('countdown').textContent=d>0?`${d} days to first exam`:'Exam season!';
+  const next=EXAMS.find(e=>e.date>now);
+  document.getElementById('next-exam').textContent=next?`Next: ${next.code} ${next.date.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`:'All exams done!';
+}
+updateCountdown();setInterval(updateCountdown,60000);
+
+function renderExamCards(){
+  const c=document.getElementById('exam-cards');c.innerHTML='';
+  const now=new Date();
+  EXAMS.forEach(e=>{
+    const d=daysBetween(now,e.date);
+    const card=document.createElement('div');card.className='exam-card';
+    card.innerHTML=`<div class="ec-color" style="background:${e.color}"></div><div class="ec-info"><h3>${e.code}</h3><p>${e.date.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})} ${e.date.getHours()}:${String(e.date.getMinutes()).padStart(2,'0')}</p></div><div class="ec-days" style="color:${e.color}">${d>0?d+'d':d===0?'TODAY':'Done'}</div>`;
+    c.appendChild(card);
+  });
+}
+
+function getStudyDays(startStr,endStr){
+  const days=[];const d=new Date(startStr);const end=new Date(endStr);
+  while(d<=end){days.push(fmtDate(d));d.setDate(d.getDate()+1);}
+  return days;
+}
+
+function isWork(dateStr){const d=new Date(dateStr);const dow=d.getDay()===0?7:d.getDay();return workDays.includes(dow);}
+function isSunday(dateStr){return new Date(dateStr).getDay()===0;}
+function isExam(dateStr){return EXAM_DATES[dateStr]||null;}
+function isPreExam(dateStr){for(const[m,ds]of Object.entries(PRE_EXAM)){if(ds.includes(dateStr))return m;}return null;}
+
+function buildPlan(){
+  const allDays=getStudyDays('2026-03-24','2026-05-28');
+  const plan={};
+  allDays.forEach(d=>{
+    const dow=new Date(d).getDay()===0?7:new Date(d).getDay();
+    plan[d]={date:d,dow,tasks:[],isWork:isWork(d),isBuffer:isSunday(d),examMod:isExam(d),preExamMod:isPreExam(d)};
+  });
+
+  const preSeasonStudy=allDays.filter(d=>d<'2026-05-05'&&!isWork(d)&&!isSunday(d));
+  const preSeasonWork=allDays.filter(d=>d<'2026-05-05'&&isWork(d));
+  const preSeasonBuffer=allDays.filter(d=>d<'2026-05-05'&&isSunday(d));
+
+  // PHASE 1: Foundation (first ~18 study days, roughly wk 1-4)
+  const phase1=preSeasonStudy.filter(d=>d<'2026-04-21');
+  // PHASE 2: Past papers (last ~8 study days, wk 5-6 pre-season)
+  const phase2=preSeasonStudy.filter(d=>d>='2026-04-21');
+
+  const p1tasks=[
+    // Wk 1 area
+    ['infra','Infra Concepts & National Strategies','NEW'],
+    ['crypto','Stream Ciphers & OTP Basics','NEW'],
+    ['infra','Complex Attacks & Kill Chains','NEW'],
+    ['crypto','Block Cipher Design (AES)','NEW'],
+    ['forensics','Intro & Legislation (Daubert)','NEW'],
+    ['crypto','ECB/CBC/CTR Modes DRILL','NEW'],
+    ['infra','Graph Theory & Robustness','NEW'],
+    ['embedded','Smart Cards & RFID Intro','NEW'],
+    // Wk 2 area
+    ['crypto','Security Models (IND-CPA)','NEW'],
+    ['infra','BGP & Internet Robustness','NEW'],
+    ['crypto','Hash Functions & Birthday Paradox','NEW'],
+    ['forensics','Data Storage & FAT32 Clusters','NEW'],
+    ['crypto','MACs (HMAC, UF-CMA)','NEW'],
+    ['infra','Economic Models & I-O','NEW'],
+    ['pm','PM Fundamentals & Charter','NEW'],
+    ['crypto','Review: Ciphers+Modes+Hashes','SR-5'],
+    // Wk 3 area
+    ['crypto','Authenticated Encryption (AE)','NEW'],
+    ['infra','CPS & Control Theory','NEW'],
+    ['crypto','RSA Encryption + Number Theory','NEW'],
+    ['forensics','NTFS & Host Forensics','NEW'],
+    ['crypto','Diffie-Hellman & ECC','NEW'],
+    ['infra','SCADA, DCS & ICS Protocols','NEW'],
+    ['embedded','EMV & SIM/USIM','NEW'],
+    ['infra','Review: BGP+CPS+Graphs','SR-5'],
+    // Wk 4 area
+    ['crypto','Digital Signatures (Schnorr)','NEW'],
+    ['infra','Stuxnet & CPS Attacks','NEW'],
+    ['crypto','TLS Protocol Deep-dive','NEW'],
+    ['forensics','Memory & Network Forensics','NEW'],
+    ['infra','ATT&CK & Attack Trees','NEW'],
+    ['crypto','TLS/Ruritania Essay Plan','NEW'],
+    ['pm','WBS + Critical Path Method','NEW'],
+    ['infra','Cyber Conflict & Policy','NEW'],
+  ];
+
+  p1tasks.forEach((t,i)=>{
+    if(i<phase1.length){
+      const day=phase1[i];
+      plan[day].tasks.push({id:`p1-${i}`,day,module:t[0],text:t[1],sr:t[2]});
+    }
+  });
+
+  // Add 2nd/3rd tasks to study days (2-3 tasks per day for the 3-block structure)
+  const p1extras=[
+    [0,'crypto','Review: Block Cipher Modes','SR-2'],
+    [1,'infra','Review: Infra Concepts','SR-2'],
+    [2,'crypto','Review: Stream+Block Ciphers','SR-2'],
+    [3,'forensics','Data Storage Basics (SSD)','NEW'],
+    [4,'pm','Pre-Initiation & Budgeting','NEW'],
+    [5,'embedded','Security Attacks & Side-Channel','NEW'],
+    [6,'crypto','Review: IND-CPA + Modes','SR-5'],
+    [7,'forensics','File Signatures & Carving','NEW'],
+    [8,'infra','Review: Kill Chains+APTs','SR-5'],
+    [9,'pm','Risk Management','NEW'],
+    [10,'forensics','Registry, Logs & Encryption','NEW'],
+    [11,'infra','Review: I-O Model+CPS','SR-5'],
+    [12,'embedded','IoT & TEEs','NEW'],
+    [13,'crypto','Review: RSA+DH+ECC','SR-5'],
+    [14,'forensics','Malware Analysis','NEW'],
+    [15,'infra','State Estimation & IDS','NEW'],
+    [16,'pm','EVM Calculations DRILL','NEW'],
+    [17,'crypto','Review: Sigs+TLS','SR-5'],
+    [18,'embedded','Automotive & Java Card','NEW'],
+    [19,'forensics','Mobile Forensics','NEW'],
+    [20,'infra','Review: ATT&CK+Policy','SR-5'],
+    [21,'pm','Config+Change+Comms','NEW'],
+    [5,'security','Review: ISO 27001 + ISMS','SR-5'],
+    [10,'security','Review: Risk (STRIDE/PASTA)','SR-5'],
+    [15,'security','Review: Controls + Incidents','SR-5'],
+    [19,'security','Review: GDPR + Audit','SR-5'],
+  ];
+
+  p1extras.forEach(t=>{
+    const idx=t[0];
+    if(idx<phase1.length){
+      const day=phase1[idx];
+      plan[day].tasks.push({id:`p1x-${idx}-${t[1]}`,day,module:t[1],text:t[2],sr:t[3]});
+    }
+  });
+
+  // PHASE 2: Past Papers
+  const p2tasks=[
+    ['infra','PP: IY3612-25 (timed)','PP'],['crypto','PP: IY3660-25 (timed)','PP'],['forensics','PP: IY3609-25 (timed)','PP'],
+    ['infra','PP: IY3612-24 (timed)','PP'],['crypto','PP: IY3660-24 (timed)','PP'],['pm','PP: CS3003-25 (timed)','PP'],
+    ['crypto','PP: IY3660-23 (timed)','PP'],['infra','PP: IY3612-23 (timed)','PP'],
+    ['embedded','PP: IY5606-25 (timed)','PP'],['forensics','PP: IY3609-24 (timed)','PP'],
+    ['crypto','Weak Areas Deep-dive','SR-7'],['infra','Weak Areas Deep-dive','SR-7'],
+    ['security','PP: IY3501-25 (timed)','PP'],['security','Review: Staff Mgmt+Case Studies','SR-7'],
+  ];
+
+  p2tasks.forEach((t,i)=>{
+    const dayIdx=Math.floor(i/2);
+    if(dayIdx<phase2.length){
+      const day=phase2[dayIdx];
+      plan[day].tasks.push({id:`p2-${i}`,day,module:t[0],text:t[1],sr:t[2]});
+    }
+  });
+
+  const p2extras=[
+    ['crypto','Review: Full Crypto Flashcards','SR-7'],
+    ['infra','Review: Full Infra Flashcards','SR-7'],
+    ['forensics','Review: FAT32+RAID Calcs','SR-7'],
+    ['pm','Review: EVM+CPM Practice','SR-7'],
+    ['embedded','Review: EMV+TEE Definitions','SR-7'],
+    ['forensics','Weak Areas: Legal+Mobile','SR-7'],
+  ];
+  p2extras.forEach((t,i)=>{
+    if(i<phase2.length){
+      const day=phase2[i];
+      plan[day].tasks.push({id:`p2x-${i}`,day,module:t[0],text:t[1],sr:t[2]});
+    }
+  });
+
+  // PHASE 3: Pre-exam sprints
+  Object.entries(PRE_EXAM).forEach(([mod,days])=>{
+    const modName={infra:'IY3612',crypto:'IY3660',embedded:'IY5606',forensics:'IY3609',pm:'CS3003',security:'IY3501'}[mod];
+    const cramTasks={
+      infra:[
+        ['Flashcard Blitz: Graphs+BGP+CPS','CRAM'],['Past Paper: IY3612-22 (timed)','PP'],['Final Review: ATT&CK+Policy+SCADA','CRAM']
+      ],
+      crypto:[
+        ['DRILL: 4-bit Block Cipher Table','CRAM'],['Past Paper: IY3660-22 (timed)','PP'],['Review: Security Games+RSA+DH','CRAM'],['Final: TLS Essay + Flashcards','CRAM']
+      ],
+      embedded:[
+        ['Flashcard Blitz: All Definitions','CRAM'],['Review: EMV+SIM+TEE+IoT','CRAM'],['Past Paper: IY5606-21','PP'],['Final: 25-mark Scenario Plan','CRAM']
+      ],
+      forensics:[
+        ['DRILL: FAT32 Calcs+RAID','CRAM'],['Past Paper: IY3609-23 (timed)','PP'],['Final: Legal+Mobile+Malware','CRAM']
+      ],
+      pm:[
+        ['DRILL: EVM Formulas (no calc!)','CRAM'],['Past Paper: CS3003-24 (timed)','PP'],['Final: Risk+Teams+Quality','CRAM']
+      ],
+      security:[
+        ['Quick Blitz: ISO 27001+GDPR+Risk+Audit','CRAM']
+      ],
+    };
+    const tasks=cramTasks[mod]||[];
+    days.forEach((d,i)=>{
+      if(plan[d]&&tasks[i]){
+        plan[d].tasks.push({id:`cram-${mod}-${i}`,day:d,module:mod,text:tasks[i][0],sr:tasks[i][1]});
+        plan[d].tasks.push({id:`cram2-${mod}-${i}`,day:d,module:mod,text:`${modName} Focused Revision`,sr:'CRAM'});
+      }
+    });
+  });
+
+  // Exam day markers
+  Object.entries(EXAM_DATES).forEach(([d,mod])=>{
+    if(plan[d]){
+      const modName={infra:'IY3612 EXAM — 2pm',crypto:'IY3660 EXAM — 9:30am',embedded:'IY5606 EXAM — 2pm',forensics:'IY3609 EXAM — 9:30am',pm:'CS3003 EXAM — 9:30am',security:'IY3501 EXAM — 9:30am'}[mod];
+      plan[d].tasks=[{id:`exam-${mod}`,day:d,module:'exam',text:modName,sr:''}];
+    }
+  });
+
+  // Work days: light review
+  preSeasonWork.forEach(d=>{
+    if(plan[d])plan[d].tasks.push({id:`wk-${d}`,day:d,module:'buffer',text:'Optional: 25min flashcard review',sr:''});
+  });
+
+  // Buffer days
+  preSeasonBuffer.forEach(d=>{
+    if(plan[d])plan[d].tasks.push({id:`buf-${d}`,day:d,module:'buffer',text:'Catch-up / Rest Day',sr:''});
+  });
+
+  return plan;
+}
+
+function makeCard(t){
+  const card=document.createElement('div');
+  card.className='task-card'+(taskStates[t.id]?' done':'');
+  card.id=t.id;card.draggable=true;card.dataset.module=t.module;
+  card.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',t.id);card.style.opacity='.4';});
+  card.addEventListener('dragend',()=>{card.style.opacity='1';});
+  const check=document.createElement('div');check.className='check';
+  check.innerHTML=taskStates[t.id]?'&#10003;':'';
+  check.addEventListener('click',e=>{e.stopPropagation();taskStates[t.id]=!taskStates[t.id];card.classList.toggle('done');check.innerHTML=taskStates[t.id]?'&#10003;':'';save();renderProgress();});
+  card.appendChild(check);
+  const txt=document.createElement('span');txt.textContent=t.text;card.appendChild(txt);
+  if(t.sr){const b=document.createElement('span');b.className='sr-badge';b.textContent=t.sr;card.appendChild(b);}
+  return card;
+}
+
+function renderCalendar(){
+  const plan=buildPlan();const grid=document.getElementById('calendar-grid');grid.innerHTML='';
+  const allKeys=Object.keys(plan).sort();
+  const first=new Date(allKeys[0]);const last=new Date(allKeys[allKeys.length-1]);
+  let ws=new Date(first);const sd=ws.getDay()===0?7:ws.getDay();ws.setDate(ws.getDate()-(sd-1));
+  let wn=1;const today=new Date();today.setHours(0,0,0,0);
+
+  while(ws<=last){
+    const row=document.createElement('div');row.className='week-row';
+    const lbl=document.createElement('div');lbl.className='week-label';lbl.textContent=`WK ${wn}`;row.appendChild(lbl);
+    for(let i=0;i<7;i++){
+      const d=new Date(ws);d.setDate(d.getDate()+i);const key=fmtDate(d);
+      const cell=document.createElement('div');cell.className='day-cell';cell.dataset.date=key;
+      const dd=new Date(d);dd.setHours(0,0,0,0);
+      if(dd.getTime()===today.getTime())cell.classList.add('today');
+      if(dd<today)cell.classList.add('past');
+
+      const info=plan[key];
+      if(!info){cell.classList.add('outside');const dt=document.createElement('div');dt.className='day-date';dt.innerHTML=`<span style="opacity:.3">${d.getDate()}</span>`;cell.appendChild(dt);row.appendChild(cell);continue;}
+
+      if(info.isWork)cell.classList.add('work-day');
+      if(info.isBuffer)cell.classList.add('buffer-day');
+      if(info.examMod)cell.classList.add('exam-day');
+      if(info.preExamMod)cell.classList.add('pre-exam');
+
+      const dateDiv=document.createElement('div');dateDiv.className='day-date';
+      dateDiv.innerHTML=`<span>${d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>`;
+      if(info.examMod)dateDiv.innerHTML+='<span class="badge badge-exam">EXAM</span>';
+      else if(info.preExamMod)dateDiv.innerHTML+=`<span class="badge badge-pre">SPRINT</span>`;
+      else if(info.isWork)dateDiv.innerHTML+='<span class="badge badge-work">WORK</span>';
+      else if(info.isBuffer)dateDiv.innerHTML+='<span class="badge badge-buffer">BUFFER</span>';
+      cell.appendChild(dateDiv);
+
+      const dz=document.createElement('div');dz.className='drop-zone';dz.dataset.date=key;
+      dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+      dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+      dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');const tid=e.dataTransfer.getData('text/plain');const c=document.getElementById(tid);if(c)dz.appendChild(c);});
+      (info.tasks||[]).forEach(t=>dz.appendChild(makeCard(t)));
+      cell.appendChild(dz);row.appendChild(cell);
+    }
+    grid.appendChild(row);ws.setDate(ws.getDate()+7);wn++;
+  }
+}
+
+function renderTopics(){
+  const c=document.getElementById('topic-list');c.innerHTML='';
+  Object.entries(TOPICS).forEach(([mod,topics])=>{
+    const m=MODULES[mod];const div=document.createElement('div');div.className='topic-module';
+    const h=document.createElement('div');h.className='topic-module-header';
+    h.innerHTML=`<div class="legend-dot" style="background:${m.color}"></div><h3>${m.code}: ${m.name}</h3><span class="arrow">&#9654;</span>`;
+    const items=document.createElement('div');items.className='topic-items';
+    h.addEventListener('click',()=>{h.classList.toggle('open');items.classList.toggle('open');});
+    topics.forEach((t,i)=>{
+      const key=`${mod}-t-${i}`;const st=topicStates[key]||{done:false,stars:0};
+      const item=document.createElement('div');item.className='topic-item'+(st.done?' checked':'');
+      const ck=document.createElement('div');ck.className='tcheck';ck.innerHTML=st.done?'&#10003;':'';
+      ck.addEventListener('click',()=>{st.done=!st.done;topicStates[key]=st;item.classList.toggle('checked');ck.innerHTML=st.done?'&#10003;':'';save();renderProgress();});
+      const sp=document.createElement('span');sp.textContent=t;
+      const conf=document.createElement('div');conf.className='topic-confidence';
+      for(let s=1;s<=5;s++){const star=document.createElement('span');star.className='star'+(s<=st.stars?' filled':'');star.textContent='★';
+        star.addEventListener('click',e=>{e.stopPropagation();st.stars=st.stars===s?0:s;topicStates[key]=st;save();conf.querySelectorAll('.star').forEach((x,idx)=>x.classList.toggle('filled',idx<st.stars));});
+        conf.appendChild(star);}
+      item.appendChild(ck);item.appendChild(sp);item.appendChild(conf);items.appendChild(item);
+    });
+    div.appendChild(h);div.appendChild(items);c.appendChild(div);
+  });
+}
+
+function renderProgress(){
+  const g=document.getElementById('progress-grid');g.innerHTML='';
+  const exam=EXAMS.find(e=>e.date>new Date());
+  Object.entries(MODULES).forEach(([mod,m])=>{
+    const t=TOPICS[mod]||[];const done=t.filter((_,i)=>(topicStates[`${mod}-t-${i}`]||{}).done).length;
+    const pct=t.length?Math.round(done/t.length*100):0;
+    const ex=EXAMS.find(e=>e.key===mod);const dLeft=ex?daysBetween(new Date(),ex.date):0;
+    const card=document.createElement('div');card.className='progress-card';
+    card.innerHTML=`<h3><div class="dot" style="background:${m.color}"></div>${m.code} — ${dLeft>0?dLeft+'d to exam':'Exam done'}</h3><div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;background:${m.color}"></div></div><div class="progress-pct">${done}/${t.length} topics (${pct}%)</div>`;
+    g.appendChild(card);
+  });
+}
+
+// POMODORO
+let pomo={running:false,seconds:25*60,mode:'focus',session:1,block:1,interval:null};
+function updatePomo(){
+  const m=String(Math.floor(pomo.seconds/60)).padStart(2,'0'),s=String(pomo.seconds%60).padStart(2,'0');
+  document.getElementById('pomo-time').textContent=`${m}:${s}`;
+  document.getElementById('pomo-label').textContent=pomo.mode==='focus'?'FOCUS TIME':pomo.mode==='short'?'SHORT BREAK':'LONG BREAK';
+  document.getElementById('pomo-status').textContent=`Block ${pomo.block}/3 — Pomodoro ${pomo.session}/3`;
+  const dots=document.getElementById('pomo-dots');dots.innerHTML='';
+  for(let b=0;b<3;b++)for(let p=0;p<3;p++){const dot=document.createElement('div');dot.className='pomo-dot';const gi=b*3+p,ci=(pomo.block-1)*3+(pomo.session-1);if(gi<ci)dot.classList.add('filled');if(gi===ci&&pomo.running)dot.classList.add('current');dots.appendChild(dot);}
+}
+function pomoTick(){
+  pomo.seconds--;
+  if(pomo.seconds<0){clearInterval(pomo.interval);pomo.running=false;
+    if(pomo.mode==='focus'){pomo.mode=pomo.session<3?'short':'long';pomo.seconds=(pomo.mode==='short'?parseInt(document.getElementById('cfg-break').value||5):parseInt(document.getElementById('cfg-long').value||20))*60;}
+    else{pomo.mode='focus';pomo.seconds=parseInt(document.getElementById('cfg-focus').value||25)*60;if(pomo.session>=3){pomo.session=1;pomo.block=Math.min(pomo.block+1,3);}else pomo.session++;}
+  }
+  updatePomo();
+}
+document.getElementById('pomo-start').addEventListener('click',()=>{if(!pomo.running){pomo.running=true;pomo.interval=setInterval(pomoTick,1000);updatePomo();}});
+document.getElementById('pomo-pause').addEventListener('click',()=>{pomo.running=false;clearInterval(pomo.interval);});
+document.getElementById('pomo-reset').addEventListener('click',()=>{pomo.running=false;clearInterval(pomo.interval);pomo.seconds=parseInt(document.getElementById('cfg-focus').value||25)*60;pomo.mode='focus';pomo.session=1;pomo.block=1;updatePomo();});
+updatePomo();
+
+// TABS
+document.querySelectorAll('.tab').forEach(tab=>{tab.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));tab.classList.add('active');document.getElementById('tab-'+tab.dataset.tab).classList.add('active');});});
+
+function applySettings(){workDays=[parseInt(document.getElementById('work1').value),parseInt(document.getElementById('work2').value)];save();renderCalendar();renderProgress();}
+function exportData(){const d={taskStates,topicStates,exported:new Date().toISOString()};const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='revision_progress.json';a.click();}
+
+renderExamCards();renderCalendar();renderTopics();renderProgress();
+</script>
+</body>
+</html>
