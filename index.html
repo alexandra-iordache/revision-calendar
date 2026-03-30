@@ -346,7 +346,7 @@ h2.section-title{font-size:1.15rem;margin-bottom:14px;padding-bottom:7px;border-
 <!-- ==================== TOPICS ==================== -->
 <div class="tab-content" id="tab-topics">
   <h2 class="section-title">Topic Mastery Checklist</h2>
-  <div class="info-box">Click topics to mark learned. Stars = confidence (1-5). Low/no stars = focus here first. Saves automatically and syncs across devices via the <strong>Share Progress</strong> link in Settings.</div>
+  <div class="info-box">Click topics to mark learned. Stars = confidence (1-5). Low/no stars = focus here first. Saves automatically and <strong>syncs to the cloud</strong> across all your devices.</div>
   <div class="topic-list" id="topic-list"></div>
 </div>
 
@@ -374,10 +374,14 @@ h2.section-title{font-size:1.15rem;margin-bottom:14px;padding-bottom:7px;border-
       <div class="config-row"><label>Long break:</label><input type="number" id="cfg-long" value="20" min="10" max="30"></div>
     </div>
     <div class="config-group">
-      <h3>Sync Across Devices</h3>
-      <p style="font-size:.78rem;color:var(--text-dim);margin-bottom:10px;">Copy your sync link and open it on any other device to transfer all progress, checked tasks, topic confidence, and task moves.</p>
-      <button class="pomo-btn primary" onclick="shareSyncLink()">Copy Sync Link</button>
-      <button class="pomo-btn secondary" style="margin-left:8px;" onclick="importFromClipboard()">Paste & Import</button>
+      <h3>Cloud Sync</h3>
+      <p style="font-size:.78rem;color:var(--text-dim);margin-bottom:10px;">Your progress syncs to the cloud automatically. To connect a second device, copy the code below and paste it on the other device.</p>
+      <div class="config-row"><label>Your Sync Code:</label><input type="text" id="sync-code" readonly style="font-family:monospace;letter-spacing:1px;"><button class="pomo-btn primary" style="margin-left:8px;padding:7px 16px;font-size:.82rem;" onclick="copySyncCode()">Copy</button></div>
+      <div class="config-row" style="margin-top:6px;"><label>Connect to:</label><input type="text" id="sync-input" placeholder="Paste code from other device"><button class="pomo-btn primary" style="margin-left:8px;padding:7px 16px;font-size:.82rem;" onclick="connectToSync()">Connect</button></div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:8px;">
+        <div id="sync-dot" style="width:10px;height:10px;border-radius:50%;background:#636e72;"></div>
+        <span id="sync-status" style="font-size:.75rem;color:var(--text-dim);">Initialising...</span>
+      </div>
     </div>
     <div class="config-group">
       <h3>Data</h3>
@@ -388,22 +392,6 @@ h2.section-title{font-size:1.15rem;margin-bottom:14px;padding-bottom:7px;border-
 </div>
 
 <script>
-// ===== AUTO-IMPORT FROM URL =====
-(function(){
-  const p=new URLSearchParams(window.location.search);
-  const s=p.get('sync');
-  if(s){
-    try{
-      const j=JSON.parse(atob(s));
-      if(j.taskStates)localStorage.setItem('taskStates2',JSON.stringify(j.taskStates));
-      if(j.topicStates)localStorage.setItem('topicStates2',JSON.stringify(j.topicStates));
-      if(j.taskMoves)localStorage.setItem('taskMoves',JSON.stringify(j.taskMoves));
-      if(j.workDays)localStorage.setItem('workDays',JSON.stringify(j.workDays));
-      window.history.replaceState({},'',window.location.pathname);
-      location.reload();
-    }catch(e){console.error('Sync import failed',e);}
-  }
-})();
 
 const EXAMS = [
   { key:'infra',    code:'IY3612', name:'Critical Infrastructure Security', date:new Date(2026,4,8,14,0),  color:'#ff1493' },
@@ -446,12 +434,142 @@ let workDays = JSON.parse(localStorage.getItem('workDays')||'[3,6]');
 let taskStates = JSON.parse(localStorage.getItem('taskStates2')||'{}');
 let topicStates = JSON.parse(localStorage.getItem('topicStates2')||'{}');
 let taskMoves = JSON.parse(localStorage.getItem('taskMoves')||'{}');
+let syncId = localStorage.getItem('syncId')||'';
+let syncTimer = null;
+const BLOB_API = 'https://jsonblob.com/api/jsonBlob';
 
 function save(){
   localStorage.setItem('taskStates2',JSON.stringify(taskStates));
   localStorage.setItem('topicStates2',JSON.stringify(topicStates));
   localStorage.setItem('workDays',JSON.stringify(workDays));
   localStorage.setItem('taskMoves',JSON.stringify(taskMoves));
+  debouncedCloudSave();
+}
+
+// ===== CLOUD SYNC ENGINE =====
+function setSyncStatus(state,msg){
+  const dot=document.getElementById('sync-dot');
+  const txt=document.getElementById('sync-status');
+  if(!dot||!txt)return;
+  const colors={synced:'#00b894',syncing:'#fdcb6e',error:'#e17055',offline:'#636e72'};
+  dot.style.background=colors[state]||colors.offline;
+  txt.textContent=msg;
+}
+
+function updateSyncUI(){
+  const el=document.getElementById('sync-code');
+  if(el)el.value=syncId||'generating...';
+}
+
+async function cloudSave(){
+  if(!syncId)return;
+  const data={taskStates,topicStates,taskMoves,workDays,ts:Date.now()};
+  setSyncStatus('syncing','Syncing...');
+  try{
+    const res=await fetch(BLOB_API+'/'+syncId,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify(data)
+    });
+    if(res.ok){
+      setSyncStatus('synced','Synced just now');
+    }else{
+      setSyncStatus('error','Sync failed ('+res.status+')');
+    }
+  }catch(e){
+    setSyncStatus('error','Offline — saved locally');
+  }
+}
+
+function debouncedCloudSave(){
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(cloudSave,1500);
+}
+
+async function cloudLoad(){
+  if(!syncId)return false;
+  setSyncStatus('syncing','Loading from cloud...');
+  try{
+    const res=await fetch(BLOB_API+'/'+syncId,{headers:{'Accept':'application/json'}});
+    if(res.ok){
+      const j=await res.json();
+      if(j.ts){
+        taskStates=j.taskStates||{};
+        topicStates=j.topicStates||{};
+        taskMoves=j.taskMoves||{};
+        workDays=j.workDays||[3,6];
+        localStorage.setItem('taskStates2',JSON.stringify(taskStates));
+        localStorage.setItem('topicStates2',JSON.stringify(topicStates));
+        localStorage.setItem('taskMoves',JSON.stringify(taskMoves));
+        localStorage.setItem('workDays',JSON.stringify(workDays));
+        setSyncStatus('synced','Loaded from cloud');
+        return true;
+      }
+    }
+    setSyncStatus('error','Could not load cloud data');
+  }catch(e){
+    setSyncStatus('error','Offline — using local data');
+  }
+  return false;
+}
+
+async function initSync(){
+  if(syncId){
+    updateSyncUI();
+    const loaded=await cloudLoad();
+    if(loaded){
+      document.getElementById('work1').value=workDays[0];
+      document.getElementById('work2').value=workDays[1];
+      renderCalendar();renderTopics();renderProgress();
+    }
+    return;
+  }
+  setSyncStatus('syncing','Creating cloud storage...');
+  const data={taskStates,topicStates,taskMoves,workDays,ts:Date.now()};
+  try{
+    const res=await fetch(BLOB_API,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify(data)
+    });
+    if(res.ok){
+      const loc=res.headers.get('Location')||res.headers.get('x-jsonblob');
+      if(loc){
+        syncId=loc.split('/').pop();
+        localStorage.setItem('syncId',syncId);
+        updateSyncUI();
+        setSyncStatus('synced','Cloud sync active');
+      }
+    }else{
+      setSyncStatus('error','Could not create cloud storage');
+    }
+  }catch(e){
+    setSyncStatus('error','Offline — saving locally only');
+  }
+}
+
+function copySyncCode(){
+  const code=document.getElementById('sync-code').value;
+  if(code&&code!=='generating...'){
+    navigator.clipboard.writeText(code).then(()=>showToast('Sync code copied!')).catch(()=>prompt('Copy this code:',code));
+  }
+}
+
+async function connectToSync(){
+  const code=document.getElementById('sync-input').value.trim();
+  if(!code){showToast('Paste a sync code first');return;}
+  syncId=code;
+  localStorage.setItem('syncId',syncId);
+  updateSyncUI();
+  const loaded=await cloudLoad();
+  if(loaded){
+    showToast('Connected! Loading data...');
+    setTimeout(()=>location.reload(),500);
+  }else{
+    showToast('Could not find that sync code');
+    syncId='';localStorage.removeItem('syncId');
+    updateSyncUI();
+  }
 }
 
 document.getElementById('work1').value=workDays[0];
@@ -821,45 +939,9 @@ function renderProgress(){
   });
 }
 
-// ===== SYNC =====
 function showToast(msg){
   const t=document.createElement('div');t.className='sync-toast';t.textContent=msg;
   document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
-}
-
-function shareSyncLink(){
-  const data={taskStates,topicStates,taskMoves,workDays,ts:Date.now()};
-  const encoded=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-  const url=window.location.origin+window.location.pathname+'?sync='+encoded;
-  navigator.clipboard.writeText(url).then(()=>{
-    showToast('Sync link copied! Open it on your other device.');
-  }).catch(()=>{
-    prompt('Copy this sync link:',url);
-  });
-}
-
-function importFromClipboard(){
-  navigator.clipboard.readText().then(text=>{
-    let data;
-    try{
-      if(text.startsWith('http')){
-        const u=new URL(text);data=u.searchParams.get('sync');
-      }else{data=text;}
-      const j=JSON.parse(decodeURIComponent(escape(atob(data))));
-      if(j.taskStates){taskStates=j.taskStates;topicStates=j.topicStates||{};taskMoves=j.taskMoves||{};workDays=j.workDays||[3,6];save();location.reload();}
-      else{showToast('Invalid sync data');}
-    }catch(e){showToast('Could not parse sync data');}
-  }).catch(()=>{
-    const text=prompt('Paste your sync link or sync code here:');
-    if(text){
-      try{
-        let data;
-        if(text.startsWith('http')){const u=new URL(text);data=u.searchParams.get('sync');}else{data=text;}
-        const j=JSON.parse(decodeURIComponent(escape(atob(data))));
-        if(j.taskStates){taskStates=j.taskStates;topicStates=j.topicStates||{};taskMoves=j.taskMoves||{};workDays=j.workDays||[3,6];save();location.reload();}
-      }catch(e){showToast('Could not parse sync data');}
-    }
-  });
 }
 
 // ===== POMODORO =====
@@ -892,6 +974,7 @@ function applySettings(){workDays=[parseInt(document.getElementById('work1').val
 function exportData(){const d={taskStates,topicStates,taskMoves,workDays,exported:new Date().toISOString()};const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='revision_progress.json';a.click();}
 
 renderExamCards();renderCalendar();renderTopics();renderProgress();
+initSync();
 </script>
 </body>
 </html>
