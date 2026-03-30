@@ -850,8 +850,9 @@ function makeCard(t){
   return card;
 }
 
+let currentPlan=null;
 function renderCalendar(){
-  const plan=buildPlan();const grid=document.getElementById('calendar-grid');grid.innerHTML='';
+  currentPlan=buildPlan();const plan=currentPlan;const grid=document.getElementById('calendar-grid');grid.innerHTML='';
   const allKeys=Object.keys(plan).sort();
   const first=new Date(allKeys[0]);const last=new Date(allKeys[allKeys.length-1]);
   let ws=new Date(first);const sd=ws.getDay()===0?7:ws.getDay();ws.setDate(ws.getDate()-(sd-1));
@@ -929,12 +930,33 @@ function renderTopics(){
 
 function renderProgress(){
   const g=document.getElementById('progress-grid');g.innerHTML='';
+  const plan=currentPlan||buildPlan();
+  const taskCounts={};
+  for(const dayData of Object.values(plan)){
+    for(const task of dayData.tasks){
+      if(task.module==='exam'||task.module==='buffer')continue;
+      if(!taskCounts[task.module])taskCounts[task.module]={total:0,done:0};
+      taskCounts[task.module].total++;
+      if(taskStates[task.id])taskCounts[task.module].done++;
+    }
+  }
   Object.entries(MODULES).forEach(([mod,m])=>{
-    const t=TOPICS[mod]||[];const done=t.filter((_,i)=>(topicStates[`${mod}-t-${i}`]||{}).done).length;
-    const pct=t.length?Math.round(done/t.length*100):0;
+    const topics=TOPICS[mod]||[];
+    const topicDone=topics.filter((_,i)=>(topicStates[`${mod}-t-${i}`]||{}).done).length;
+    const tc=taskCounts[mod]||{total:0,done:0};
+    const combinedDone=tc.done+topicDone;
+    const combinedTotal=tc.total+topics.length;
+    const pct=combinedTotal?Math.round(combinedDone/combinedTotal*100):0;
+    const taskPct=tc.total?Math.round(tc.done/tc.total*100):0;
+    const topicPct=topics.length?Math.round(topicDone/topics.length*100):0;
     const ex=EXAMS.find(e=>e.key===mod);const dLeft=ex?daysBetween(new Date(),ex.date):0;
     const card=document.createElement('div');card.className='progress-card';
-    card.innerHTML=`<h3><div class="dot" style="background:${m.color}"></div>${m.code} \u2014 ${dLeft>0?dLeft+'d to exam':'Exam done'}</h3><div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;background:${m.color}"></div></div><div class="progress-pct">${done}/${t.length} topics (${pct}%)</div>`;
+    card.innerHTML=`<h3><div class="dot" style="background:${m.color}"></div>${m.code} \u2014 ${dLeft>0?dLeft+'d to exam':'Exam done'}</h3>`
+      +`<div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;background:${m.color}"></div></div>`
+      +`<div class="progress-pct" style="font-size:.85rem;font-weight:700;">${pct}% overall</div>`
+      +`<div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.72rem;color:var(--text-dim);">`
+      +`<span>\u2611 Calendar: ${tc.done}/${tc.total} tasks (${taskPct}%)</span>`
+      +`<span>\u2605 Topics: ${topicDone}/${topics.length} mastered (${topicPct}%)</span></div>`;
     g.appendChild(card);
   });
 }
